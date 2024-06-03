@@ -20,9 +20,11 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    description = serializers.JSONField()
+
     class Meta:
         model = Group
-        fields = ('id', 'title', 'slug', 'desription')
+        fields = ('id', 'title', 'slug', 'description')
 
 
 class CommentSerializer(serializers.ModelSerializer):

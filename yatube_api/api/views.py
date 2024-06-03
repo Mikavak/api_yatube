@@ -81,7 +81,11 @@ def one_comment(request, post_id, comment_id):
         comment = Comment.objects.get(pk=comment_id)
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
+    # if request.user.is_authenticated:
+    #     if request.method == 'DELETE':
+    # else:
+        # return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     # if request.user.is_authenticated:
     #     return Response(status=status.HTTP_401_UNAUTHORIZED)
