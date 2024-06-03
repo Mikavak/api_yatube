@@ -1,13 +1,19 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework import viewsets
-from .serializers import PostSerializer, GroupSerializer
-  # Импортировали класс Response
+from .serializers import PostSerializer, GroupSerializer, CommentSerializer, UserSerializer
+# Импортировали класс Response
 from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view
 
-from posts.models import Post, Group
+
+from posts.models import Post, Group, Comment, User
+
+
+class PermissionDenied(Exception):
+    pass
 
 
 class PostList(viewsets.ModelViewSet):
@@ -17,21 +23,70 @@ class PostList(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user:
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.author != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
-        else:
-            serializer.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # def perform_destroy(self, request, pk):
-    #     post = get_object_or_404(Post, id=pk)
-    #     if request.user != post.author:
-    #         return Response(status=status.HTTP_403_FORBIDDEN)
-        
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        if instance.author != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
 
 class GroupList(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
 
-# Create your views here.
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+@api_view(['GET', 'POST'])
+def comments(request, post_id):
+    # post_id = request.kwargs.get('post_id')
+    post = Post.objects.get(id=post_id)
+    comments = Comment.objects.filter(post=post_id)
+    if post.author != request.user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    else:
+        if request.method == 'POST':
+            serializer = CommentSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data)
+
+
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def one_comment(request, post_id, comment_id):
+    if request.method == 'GET':
+        comment = Comment.objects.get(pk=comment_id)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    # if request.user.is_authenticated:
+    #     return Response(status=status.HTTP_401_UNAUTHORIZED)
+    # post = Post.objects.get(id=post_id)
+
+    # comments = Comment.objects.filter(id=comment_id)
+    # if post.author != request.user:
+    #     return Response(status=status.HTTP_403_FORBIDDEN)
