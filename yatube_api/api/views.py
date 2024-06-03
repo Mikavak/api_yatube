@@ -61,18 +61,19 @@ def comments(request, post_id):
     # post_id = request.kwargs.get('post_id')
     post = Post.objects.get(id=post_id)
     comments = Comment.objects.filter(post=post_id)
-    if post.author != request.user:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-    else:
+    if request.user.is_authenticated:
+        if post.author != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         if request.method == 'POST':
             serializer = CommentSerializer(data=request.data)
+            serializer.author = request.user
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
