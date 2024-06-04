@@ -7,10 +7,6 @@ from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
                           UserSerializer)
 
 
-class PermissionDenied(Exception):
-    pass
-
-
 class PostList(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -53,7 +49,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 @api_view(['GET', 'POST'])
 def comments(request, post_id):
-    # post_id = request.kwargs.get('post_id')
     post = Post.objects.get(id=post_id)
     comments = Comment.objects.filter(post=post_id)
     if request.user.is_authenticated:
