@@ -1,8 +1,8 @@
+from django.urls import include, path
 from rest_framework.authtoken import views
 from rest_framework.routers import SimpleRouter
-from .views import PostList, GroupList, comments, one_comment
-from django.urls import path, include
 
+from .views import GroupList, PostList, comments, one_comment
 
 router = SimpleRouter()
 router.register('posts', PostList)
