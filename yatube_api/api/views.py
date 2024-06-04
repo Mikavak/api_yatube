@@ -1,7 +1,6 @@
-from django.shortcuts import get_object_or_404, render
 from posts.models import Comment, Group, Post, User
-from rest_framework import generics, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework import status, viewsets
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
@@ -62,9 +61,8 @@ def comments(request, post_id):
             return Response(status=status.HTTP_403_FORBIDDEN)
     if request.method == 'POST':
         serializer = CommentSerializer(data=request.data)
-        # serializer.author = request.user
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(author=request.user, post_id=post_id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
@@ -86,13 +84,13 @@ def one_comment(request, post_id, comment_id):
                 return Response(status=status.HTTP_403_FORBIDDEN)
             comment.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'PUT' or request.method == 'PATCH':
+            if comment.author != request.user:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            serializer = CommentSerializer(comment, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    # if request.user.is_authenticated:
-    #     return Response(status=status.HTTP_401_UNAUTHORIZED)
-    # post = Post.objects.get(id=post_id)
-
-    # comments = Comment.objects.filter(id=comment_id)
-    # if post.author != request.user:
-    #     return Response(status=status.HTTP_403_FORBIDDEN)
