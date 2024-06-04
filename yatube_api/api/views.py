@@ -77,7 +77,7 @@ def one_comment(request, post_id, comment_id):
 
     if request.method == 'GET':
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     if request.user.is_authenticated:
         if request.method == 'DELETE':
             if comment.author != request.user:
