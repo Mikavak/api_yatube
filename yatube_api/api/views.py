@@ -87,7 +87,8 @@ def one_comment(request, post_id, comment_id):
         if request.method == 'PUT' or request.method == 'PATCH':
             if comment.author != request.user:
                 return Response(status=status.HTTP_403_FORBIDDEN)
-            serializer = CommentSerializer(comment, data=request.data, partial=True)
+            serializer = CommentSerializer(
+                comment, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
