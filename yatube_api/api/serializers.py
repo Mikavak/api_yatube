@@ -1,14 +1,6 @@
-from posts.models import Comment, Group, Post, User
 from rest_framework import serializers
 
-
-class UserSerializer(serializers.ModelSerializer):
-    cats = serializers.StringRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'cats')
-        ref_name = 'ReadOnlyUsers'
+from posts.models import Comment, Group, Post
 
 
 class PostSerializer(serializers.ModelSerializer):
