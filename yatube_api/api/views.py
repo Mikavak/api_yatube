@@ -1,15 +1,9 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets
 
-from .serializers import CommentSerializer, GroupSerializer, PostSerializer
 from posts.models import Comment, Group, Post
-
-
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        return obj.author == request.user
+from .permissions import IsOwnerOrReadOnly
+from .serializers import CommentSerializer, GroupSerializer, PostSerializer
 
 
 class LightCommentViewSet(viewsets.ModelViewSet):
@@ -18,6 +12,7 @@ class LightCommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         post_id = self.kwargs.get("post_id")
+        get_object_or_404(Post, id=post_id)
         serializer.save(author=self.request.user, post_id=post_id)
 
     def get_queryset(self):
